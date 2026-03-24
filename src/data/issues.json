@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1",
+    "num": 1,
+    "serial": 1,
+    "year": 2024,
+    "month": "март",
+    "theme": "Весеннее обострение",
+    "coverImage": null,
+    "editor": "Иван Петров",
+    "printCount": 500,
+    "description": "Первый выпуск журнала ВТОРНИК"
+  },
+  {
+    "id": "2",
+    "num": 2,
+    "serial": 2,
+    "year": 2024,
+    "month": "апрель",
+    "theme": "Город и человек",
+    "coverImage": null,
+    "editor": "Анна Сидорова",
+    "printCount": 600,
+    "description": "Выпуск о городской культуре"
+  },
+  {
+    "id": "3",
+    "num": 3,
+    "serial": 3,
+    "year": 2024,
+    "month": "май",
+    "theme": "Память места",
+    "coverImage": null,
+    "editor": "Иван Петров",
+    "printCount": 550,
+    "description": "Литературные очерки о местах"
+  },
+  {
+    "id": "4",
+    "num": 4,
+    "serial": 4,
+    "year": 2024,
+    "month": "июнь",
+    "theme": "Диалоги",
+    "coverImage": null,
+    "editor": "Мария Козлова",
+    "printCount": 700,
+    "description": "Выпуск-дискуссия"
+  }
+]

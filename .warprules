@@ -1,0 +1,191 @@
+# .warprules — Журнал обучения проекта ВТОРНИК
+
+## 📚 Обнаруженные паттерны
+
+### 1. Модульная структура компонентов
+```
+src/components/
+├── layout/      # Header, Footer (общие)
+├── cards/       # IssueCard, EssayCard, AuthorCard (переиспользуемые)
+├── modals/      # Modal, ArticleModal, AuthorModal
+└── ui/          # Button, ThemeToggle (базовые UI)
+```
+**Важно:** При создании новых компонентов следовать этой классификации.
+
+### 2. Pinia stores структура
+Каждый store следует паттерну:
+```javascript
+import { defineStore } from 'pinia'
+
+export const useXStore = defineStore('x', {
+  state: () => ({ items: [] }),
+  getters: {
+    getById: (state) => (id) => state.items.find(i => i.id === id)
+  },
+  actions: {
+    async fetch() { /* API call */ },
+    async add(item) { /* API call */ },
+    async update(id, item) { /* API call */ },
+    async delete(id) { /* API call */ }
+  }
+})
+```
+
+### 3. Дизайн-токены (CSS переменные)
+**Файл:** `src/styles/variables.css`
+
+Основные цвета:
+```css
+--cr: #7A1515;   /* красный акцент */
+--dcr: #5C0F0F;  /* тёмно-красный */
+--ink: #1C1410;  /* текст */
+--paper: #F9F5F0;/* фон бумаги */
+--warm: #F7EFE3; /* тёплый фон */
+--sand: #F2E8D8; /* песочный */
+--gold: #C9A962; /* золото */
+```
+**Важно:** Использовать только эти переменные для консистентности дизайна.
+
+### 4. Rich Text Editor
+Текущая реализация: `document.execCommand` (deprecated, но работает).
+**Планируется:** Переход на TipTap или Quill при необходимости расширенной функциональности.
+
+## 👤 Пользовательские предпочтения
+
+### Рабочий процесс
+- Предпочитает русский язык для общения
+- Дизайнер по профессии → важен визуальный аспект
+- Ценит чистую структуру и документацию
+
+### Предпочтения по коду
+- Composition API (`<script setup>`)
+- Модульные CSS файлы по назначению
+- CSS Custom Properties для дизайн-токенов
+- Чёткое разделение компонентов по типам
+
+## 🏗️ Шаблоны, специфичные для проекта
+
+### 1. Маршруты
+```javascript
+// Публичные
+/                    → Home
+/issue/:id           → Issue
+/article/:id         → Article
+/authors             → Authors
+/authors/:id         → AuthorDetail
+/about               → About
+
+// CMS
+/cms                 → Dashboard
+/cms/issues          → Issues CRUD
+/cms/articles        → Articles CRUD
+/cms/authors         → Authors CRUD
+/cms/prepare         → Prepare for print
+/cms/spine           → Spine calculator
+```
+
+### 2. Структура данных
+**Статья:**
+```javascript
+{
+  id: 'uuid',
+  title: 'Заголовок',
+  subtitle: 'Подзаголовок',
+  body: '<p>HTML контент</p>',
+  authorId: 'uuid',
+  issueId: 'uuid',
+  section: 'prose',
+  rubric: 'Отдел прозы',
+  genre: 'Рассказ',
+  customGenre: '',
+  sortOrder: 1
+}
+```
+
+**Автор:**
+```javascript
+{
+  id: 'uuid',
+  name: 'Имя Фамилия',
+  tagline: 'Поэт',
+  bio: 'Биография...',
+  photoUrl: 'https://...'
+}
+```
+
+**Номер:**
+```javascript
+{
+  id: 'uuid',
+  title: '№1 / 2026',
+  description: 'Описание номера',
+  coverUrl: 'https://...',
+  published: true,
+  sortOrder: 1
+}
+```
+
+## ⚠️ Известные проблемы
+
+1. **Данные в JSON** — нет сохранения между сессиями
+   - **Решение:** Интеграция Supabase (приоритет 1)
+
+2. **CMS без авторизации** — доступно всем
+   - **Решение:** Supabase Auth + router guards
+
+3. **PDF генерация** — требует доработки
+   - **Решение:** Перенос логики из старого проекта
+
+4. **Нет 404 страницы**
+   - **Решение:** Добавить страницу позже
+
+## 🔄 Эволюция решений
+
+### Выбор Pinia вместо Vuex
+- Лучшая поддержка TypeScript
+- Проще API
+- Модульность из коробки
+
+### Выбор Vite вместо Webpack
+- Мгновенный HMR
+- Быстрая сборка
+- Проще конфигурация
+
+### Нейроморфный дизайн
+- Соответствует литературному характеру журнала
+- Тёплая палитра создаёт уютную атмосферу
+- Отличается от стандартных плоских дизайнов
+
+## 🛠️ Шаблоны использования инструментов
+
+### Команды разработки
+```bash
+npm run dev      # Запуск dev сервера
+npm run build    # Production сборка
+npm run preview  # Preview production
+```
+
+### Git commits
+- `feat:` — новая функциональность
+- `fix:` — исправление ошибок
+- `refactor:` — рефакторинг
+- `docs:` — документация
+- `style:` — стили, форматирование
+
+### Memory Bank обновления
+- После завершения значительной задачи
+- При обнаружении новых паттернов
+- По запросу пользователя "update memory bank"
+
+## 📝 Чек-лист для новых задач
+
+### Перед началом работы
+- [ ] Прочитать ВСЕ файлы memory-bank/
+- [ ] Проверить activeContext.md на текущий фокус
+- [ ] Проверить progress.md на известные проблемы
+
+### После завершения работы
+- [ ] Обновить activeContext.md (последние изменения)
+- [ ] Обновить progress.md (что сделано/осталось)
+- [ ] Добавить новые паттерны в .warprules
+- [ ] Закоммитить изменения

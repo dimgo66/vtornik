@@ -1,0 +1,13 @@
+/* ══════════════════════════════════════════════════
+   MAIN STYLES — ВТОРНИК
+   ══════════════════════════════════════════════════ */
+
+@import './variables.css';
+@import './base.css';
+@import './neuromorphic.css';
+@import './components/buttons.css';
+@import './components/cards.css';
+@import './components/modals.css';
+@import './components/layout.css';
+@import './components/cms.css';
+@import './utils/helpers.css';

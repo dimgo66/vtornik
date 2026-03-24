@@ -1,0 +1,51 @@
+/* ══════════════════════════════════════════════════
+   DESIGN TOKENS — ВТОРНИК
+   ══════════════════════════════════════════════════ */
+
+:root {
+  /* ── Colors ── */
+  --cr: #7A1515;        /* Основной акцентный (красный) */
+  --dcr: #5C0F0F;       /* Тёмно-красный */
+  --ink: #1C1410;       /* Основной текст */
+  --paper: #F9F5F0;     /* Фон бумаги */
+  --warm: #F7EFE3;      /* Тёплый фон */
+  --sand: #F2E8D8;      /* Песочный фон */
+  --gold: #C9A962;      /* Золотой акцент */
+  --gray: #6B6B6B;      /* Серый текст */
+  --lgray: #DCDCDC;     /* Светло-серый */
+  --border: #E8E3DC;    /* Границы */
+  
+  /* ── Typography ── */
+  --fn: 'PT Sans', sans-serif;        /* Основной шрифт */
+  --fd: 'PT Serif', serif;            /* Шрифт с засечками */
+  --fnr: 'PT Sans Narrow', sans-serif; /* Узкий шрифт */
+  --fj: 'NewJournal', Georgia, serif; /* Журнальный шрифт */
+  
+  /* ── Spacing ── */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 4px rgba(28, 20, 16, 0.05);
+  --shadow-md: 0 4px 12px rgba(28, 20, 16, 0.08);
+  --shadow-lg: 0 8px 30px rgba(122, 21, 21, 0.12);
+  
+  /* ── Transitions ── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  
+  /* ── Layout ── */
+  --container-max: 1440px;
+  --article-max: 720px;
+}

@@ -1,0 +1,30 @@
+{
+  "name": "vtornik-vue",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v",
+    "db:logs": "docker-compose logs -f",
+    "db:studio": "open http://localhost:3001",
+    "db:backup": "docker exec vtornik-db pg_dump -U postgres postgres > backup_$(date +%Y%m%d).sql",
+    "db:psql": "docker exec -it vtornik-db psql -U postgres -d postgres"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.0",
+    "@tinymce/tinymce-vue": "^6.3.0",
+    "jspdf": "^2.5.2",
+    "pinia": "^3.0.1",
+    "tinymce": "^8.3.2",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^6.2.3"
+  }
+}
