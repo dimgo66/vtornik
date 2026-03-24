@@ -5,14 +5,20 @@
       <div class="container">
         <div class="hero">
           <div class="hero-l">
-            <div class="hero-badge">🏆 Свежий номер</div>
-            <div class="hero-num">{{ latestIssue ? `№ ${latestIssue.num} (${latestIssue.serial})` : '—' }}</div>
-            <div class="hero-theme">«{{ latestIssue?.theme || 'Вторник' }}»</div>
-            <div class="hero-desc">
-              {{ latestIssue ? `${cap(latestIssue.month)} ${latestIssue.year}` : '' }} · Москва · Издательский дом «Вторник»
-              <br>
-              <em style="opacity:.6;font-size:.85rem">Толстый зависимый* литературно-художественный журнал</em>
+            <div class="hero-title-wrap">
+              <div class="hero-title">ВТОРНИК</div>
+              <img src="@/assets/images/самовар.svg" alt="самовар" class="hero-samovar" />
             </div>
+            <div class="hero-slogan">
+              <em>Толстый зависимый* литературно-художественный журнал</em>
+              <span class="hero-footnote">*От дня недели и погоды</span>
+            </div>
+            <div class="hero-badge">🏆 Свежий номер</div>
+            <div class="hero-num">
+              № {{ latestIssue?.num || '—' }} ({{ latestIssue?.serial || '—' }})
+              <span class="hero-date">{{ latestIssue ? cap(latestIssue.month) : '' }} {{ latestIssue?.year || '' }}</span>
+            </div>
+            <div class="hero-theme">«{{ latestIssue?.theme || 'Вторник' }}»</div>
             <div class="hero-btns">
               <button v-if="latestIssue" class="btn btn-gold" @click="goToIssue(latestIssue.id)">
                 📖 Читать номер
@@ -23,21 +29,16 @@
             </div>
           </div>
           <div class="hero-r" :class="{ 'has-vid': latestIssue?.coverVideoUrl }">
-            <video v-if="latestIssue?.coverVideoUrl" :src="latestIssue.coverVideoUrl" autoplay muted loop playsinline></video>
-            <div v-if="latestIssue?.coverVideoUrl" class="hero-overlay"></div>
-            <div v-if="latestIssue?.coverImageUrl" class="hero-cover">
-              <img :src="latestIssue.coverImageUrl" :alt="latestIssue.theme" />
-            </div>
-            
-            <!-- Логотип и информация поверх видео/изображения -->
-            <div class="hero-branding">
-              <img src="@/assets/images/ВТОРНИК white.svg" alt="ВТОРНИК" class="hero-logo" />
-              <div class="hero-full-number">№ {{ latestIssue?.num }} ({{ latestIssue?.serial }})</div>
-              <div class="hero-issue-info">
-                <span class="hero-issue-number">{{ latestIssue?.month?.toUpperCase() }} {{ latestIssue?.year }}</span>
-              </div>
-              <div v-if="latestIssue?.theme" class="hero-issue-theme">{{ latestIssue.theme }}</div>
-            </div>
+            <CoverPreview
+              v-if="latestIssue"
+              :cover-video-url="latestIssue.coverVideoUrl"
+              :cover-image-url="latestIssue.coverImageUrl"
+              :num="latestIssue.num"
+              :serial="latestIssue.serial"
+              :month="latestIssue.month"
+              :year="latestIssue.year"
+              :theme="latestIssue.theme"
+            />
           </div>
         </div>
       </div>
@@ -52,7 +53,7 @@
         </div>
         <div class="issues-grid">
           <IssueCard
-            v-for="issue in issues"
+            v-for="issue in publishedIssues"
             :key="issue.id"
             :issue="issue"
             @click="goToIssue(issue.id)"
@@ -154,6 +155,7 @@ import { useAuthorsStore } from '@/stores/authors'
 import IssueCard from '@/components/cards/IssueCard.vue'
 import EssayCard from '@/components/cards/EssayCard.vue'
 import AuthorCard from '@/components/cards/AuthorCard.vue'
+import CoverPreview from '@/components/ui/CoverPreview.vue'
 
 const router = useRouter()
 const issuesStore = useIssuesStore()
@@ -161,6 +163,7 @@ const articlesStore = useArticlesStore()
 const authorsStore = useAuthorsStore()
 
 const issues = computed(() => issuesStore.allIssues)
+const publishedIssues = computed(() => issuesStore.allIssues.filter(i => i.status === 'published'))
 const latestIssue = computed(() => issuesStore.getLatestIssue)
 const recentArticles = computed(() => articlesStore.allArticles.slice(0, 6))
 const authors = computed(() => authorsStore.allAuthors.slice(0, 4))
@@ -203,15 +206,34 @@ function scrollToIssues() {
 <style scoped>
 /* Hero Section */
 .hero {
-  display: grid;
-  grid-template-columns: 1fr 400px;
+  display: flex;
   gap: 3rem;
   align-items: center;
+  justify-content: center;
   padding: 2rem 0;
 }
 
 .hero-l {
+  width: 500px;
+  flex-shrink: 0;
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.hero-r {
+  position: relative;
+  aspect-ratio: 3/4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow:
+    8px 8px 16px var(--neu-shadow-dark),
+    -8px -8px 16px var(--neu-shadow-light);
+  width: 400px;
+  flex-shrink: 0;
 }
 
 .hero-badge {
@@ -222,9 +244,54 @@ function scrollToIssues() {
   font-weight: 700;
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-md);
+  margin-top: var(--space-md);
   margin-bottom: var(--space-md);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+.hero-title-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  margin-bottom: -0.3rem;
+}
+
+.hero-title {
+  font-family: var(--fj);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--neu-primary);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.hero-samovar {
+  height: 5.25rem;
+  width: auto;
+  flex-shrink: 0;
+  margin-bottom: calc(1rem - 6px);
+}
+
+.hero-slogan {
+  font-size: 0.9rem;
+  color: var(--neu-primary);
+  margin-bottom: var(--space-xs);
+  opacity: 0.8;
+}
+
+.hero-slogan em {
+  font-style: italic;
+}
+
+.hero-footnote {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--neu-primary);
+  margin-top: var(--space-xs);
+  opacity: 0.6;
+  text-align: right;
 }
 
 .hero-num {
@@ -233,7 +300,20 @@ function scrollToIssues() {
   font-weight: 700;
   color: var(--neu-primary);
   line-height: 1;
+  margin-top: var(--space-md);
   margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  letter-spacing: 0;
+}
+
+.hero-date {
+  font-family: var(--fj);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neu-primary);
+  letter-spacing: 0;
 }
 
 .hero-theme {
@@ -244,17 +324,12 @@ function scrollToIssues() {
   margin-bottom: var(--space-md);
 }
 
-.hero-desc {
-  font-size: 0.9rem;
-  color: var(--neu-text-secondary);
-  line-height: 1.6;
-  margin-bottom: var(--space-lg);
-}
-
 .hero-btns {
   display: flex;
   gap: var(--space-md);
   flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-lg);
 }
 
 .hero-r {
@@ -290,71 +365,6 @@ function scrollToIssues() {
   object-fit: cover;
 }
 
-/* Hero Branding */
-.hero-branding {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 10%;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.hero-logo {
-  width: 80%;
-  max-width: 320px;
-  height: auto;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
-  margin-bottom: var(--space-md);
-}
-
-.hero-issue-info {
-  display: flex;
-  gap: var(--space-md);
-  align-items: baseline;
-  margin-bottom: var(--space-sm);
-}
-
-.hero-issue-number {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--neu-accent);
-  letter-spacing: 0.05em;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-.hero-issue-month {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-.hero-full-number {
-  font-family: var(--fj);
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
-  margin-bottom: var(--space-sm);
-  letter-spacing: 0.05em;
-}
-
-.hero-issue-theme {
-  font-family: var(--fd);
-  font-size: 1.3rem;
-  font-style: italic;
-  color: #fff;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  text-align: center;
-  max-width: 80%;
-}
-
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -373,17 +383,17 @@ function scrollToIssues() {
 }
 
 .btn-gold {
-  background: linear-gradient(135deg, var(--neu-accent), var(--neu-accent-light));
+  background: linear-gradient(135deg, var(--cr), var(--dcr));
   color: #fff;
   box-shadow:
-    4px 4px 8px rgba(201, 169, 98, 0.3),
+    4px 4px 8px rgba(210, 105, 30, 0.3),
     -4px -4px 8px rgba(255, 255, 255, 0.1);
 }
 
 .btn-gold:hover {
   transform: translateY(-2px);
   box-shadow:
-    6px 6px 12px rgba(201, 169, 98, 0.4),
+    6px 6px 12px rgba(210, 105, 30, 0.4),
     -6px -6px 12px rgba(255, 255, 255, 0.15);
 }
 
@@ -431,7 +441,7 @@ function scrollToIssues() {
 /* Grids */
 .issues-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 200px));
   gap: var(--space-md);
 }
 
@@ -521,30 +531,36 @@ function scrollToIssues() {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .hero {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: var(--space-lg);
+    max-width: 748px;
+    align-items: center;
   }
-  
+
+  .hero-l {
+    width: 100%;
+  }
+
   .hero-r {
-    order: -1;
-    max-height: 400px;
+    width: 100%;
+    max-width: 400px;
   }
-  
+
   .hero-num {
     font-size: 2rem;
   }
-  
+
   .hero-theme {
     font-size: 1.2rem;
   }
-  
+
   .about-stats {
     flex-direction: column;
     gap: var(--space-lg);
   }
-  
+
   .issues-grid,
   .essays-grid,
   .authors-grid {

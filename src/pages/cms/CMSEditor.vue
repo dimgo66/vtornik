@@ -71,38 +71,16 @@
         <!-- Предпросмотр обложки -->
         <div v-if="isIssue" class="neu-editor-card neu-editor-card--cover-preview">
           <h2 class="neu-editor-section-title">📖 Предпросмотр обложки</h2>
-          
-          <div class="neu-cover-preview">
-            <div class="neu-cover-preview__video-wrap">
-              <video v-if="form.coverVideoUrl" autoplay muted loop playsinline class="neu-cover-preview__video">
-                <source :src="form.coverVideoUrl" type="video/mp4" />
-              </video>
-              <img v-else-if="form.coverImageUrl" :src="form.coverImageUrl" alt="Обложка" class="neu-cover-preview__image" />
-              <div v-else class="neu-cover-preview__placeholder">
-                <span>Загрузите видео или изображение</span>
-              </div>
-              
-              <!-- Логотип -->
-              <div class="neu-cover-preview__logo">
-                <img src="@/assets/images/ВТОРНИК white.svg" alt="ВТОРНИК" class="neu-cover-preview__logo-img" />
-              </div>
-              
-              <!-- Номер и тема -->
-              <div class="neu-cover-preview__info">
-                <div class="neu-cover-preview__number-line">
-                  <span class="neu-cover-preview__number">
-                    № {{ form.num || 'X' }} ({{ form.serial || 'XXX' }})
-                  </span>
-                  <span class="neu-cover-preview__month">
-                    {{ form.month ? form.month.toUpperCase() : 'МЕСЯЦ' }} {{ form.year || 'ГОД' }}
-                  </span>
-                </div>
-                <div class="neu-cover-preview__theme">
-                  {{ form.theme || 'ТЕМА НОМЕРА' }}
-                </div>
-              </div>
-            </div>
-          </div>
+
+          <CoverPreview
+            :cover-video-url="form.coverVideoUrl"
+            :cover-image-url="form.coverImageUrl"
+            :num="form.num || 'X'"
+            :serial="form.serial || 'XXX'"
+            :month="form.month || 'МЕСЯЦ'"
+            :year="form.year || 'ГОД'"
+            :theme="form.theme || ''"
+          />
 
           <!-- Загрузка видео/изображения -->
           <div class="neu-cover-upload">
@@ -600,6 +578,7 @@ import { useArticlesStore } from '@/stores/articles'
 import { useAuthorsStore } from '@/stores/authors'
 import { useIssuesStore } from '@/stores/issues'
 import { uploadImage } from '@/services/imageUpload'
+import CoverPreview from '@/components/ui/CoverPreview.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -1687,53 +1666,9 @@ async function handleImageUpload(e) {
   padding: 0;
 }
 
-.neu-cover-preview {
+.neu-editor-card--cover-preview .neu-cover {
   max-width: 400px;
   margin: 0 auto;
-}
-
-.neu-cover-preview__video-wrap {
-  position: relative;
-  aspect-ratio: 3/4;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow:
-    8px 8px 16px var(--neu-shadow-dark),
-    -8px -8px 16px var(--neu-shadow-light);
-}
-
-.neu-cover-preview__video,
-.neu-cover-preview__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.neu-cover-preview__placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, var(--neu-bg-secondary), var(--neu-bg-primary));
-  color: var(--neu-text-muted);
-  font-size: 0.9rem;
-}
-
-.neu-cover-preview__logo {
-  position: absolute;
-  top: var(--space-md);
-  left: var(--space-md);
-  right: var(--space-md);
-  text-align: center;
-  z-index: 10;
-}
-
-.neu-cover-preview__logo-img {
-  width: 80%;
-  max-width: 320px;
-  height: auto;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 /* Cover Upload */
@@ -1796,71 +1731,6 @@ async function handleImageUpload(e) {
   font-size: 0.85rem;
   background: linear-gradient(145deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
   border-radius: var(--radius-md);
-}
-
-.neu-cover-preview__logo {
-  position: absolute;
-  top: var(--space-lg);
-  left: 0;
-  right: 0;
-  text-align: center;
-  z-index: 10;
-  padding: 0 var(--space-md);
-}
-
-.neu-cover-preview__logo-img {
-  width: 100%;
-  max-width: 380px;
-  height: auto;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
-}
-
-.neu-cover-preview__info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: var(--space-lg);
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 70%, transparent 100%);
-  z-index: 10;
-}
-
-.neu-cover-preview__number-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-md);
-  margin-bottom: var(--space-sm);
-  font-family: var(--fn);
-}
-
-.neu-cover-preview__number {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--neu-accent);
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.neu-cover-preview__month {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.8);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  flex: 1;
-  text-align: right;
-}
-
-.neu-cover-preview__theme {
-  font-family: var(--fd);
-  font-size: 1.3rem;
-  font-style: italic;
-  color: #fff;
-  text-shadow:
-    2px 2px 4px rgba(0, 0, 0, 0.8),
-    -2px -2px 4px rgba(0, 0, 0, 0.5);
-  line-height: 1.3;
 }
 
 .neu-editor-image-preview {

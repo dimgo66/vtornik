@@ -15,6 +15,7 @@
             <th>Сквозной</th>
             <th>Месяц</th>
             <th>Год</th>
+            <th>Статус</th>
             <th>Обложка</th>
             <th>Действия</th>
           </tr>
@@ -25,6 +26,11 @@
             <td>{{ issue.serial }}</td>
             <td>{{ issue.month }}</td>
             <td>{{ issue.year }}</td>
+            <td>
+              <span :class="['neu-cms-status', issue.status === 'published' ? 'neu-cms-status--published' : 'neu-cms-status--draft']">
+                {{ issue.status === 'published' ? '✅ Опубликован' : '📝 Черновик' }}
+              </span>
+            </td>
             <td>
               <video v-if="issue.coverVideoUrl" :src="issue.coverVideoUrl" autoplay muted loop playsinline class="neu-cms-cover-video" />
               <img v-else-if="issue.coverImageUrl" :src="issue.coverImageUrl" alt="Обложка" class="neu-cms-cover" />
@@ -38,6 +44,22 @@
                 <RouterLink :to="`/cms/issue/${issue.id}/edit`" class="neu-cms-icon-btn" title="Редактировать">
                   ✏️
                 </RouterLink>
+                <button 
+                  v-if="issue.status !== 'published'"
+                  class="neu-cms-icon-btn neu-cms-icon-btn--success" 
+                  @click="publishIssue(issue.id)" 
+                  title="Опубликовать"
+                >
+                  ✅
+                </button>
+                <button 
+                  v-if="issue.status === 'published'"
+                  class="neu-cms-icon-btn neu-cms-icon-btn--warning" 
+                  @click="unpublishIssue(issue.id)" 
+                  title="В черновик"
+                >
+                  ⏸️
+                </button>
                 <button class="neu-cms-icon-btn neu-cms-icon-btn--danger" @click="deleteIssue(issue.id)" title="Удалить">
                   🗑️
                 </button>
@@ -73,12 +95,48 @@ function deleteIssue(id) {
     issuesStore.deleteIssue(id)
   }
 }
+
+async function publishIssue(id) {
+  if (confirm('Опубликовать этот номер?')) {
+    await issuesStore.updateIssue(id, { status: 'published' })
+    await refreshIssues()
+  }
+}
+
+async function unpublishIssue(id) {
+  if (confirm('Перевести номер в черновики?')) {
+    await issuesStore.updateIssue(id, { status: 'draft' })
+    await refreshIssues()
+  }
+}
+
+async function refreshIssues() {
+  await issuesStore.fetchIssues()
+}
 </script>
 
 <style scoped>
 .neu-cms-table-num {
   font-weight: 700;
   color: var(--neu-primary);
+}
+
+.neu-cms-status {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.neu-cms-status--published {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+  color: #2e7d32;
+}
+
+.neu-cms-status--draft {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+  color: #f57f17;
 }
 
 .neu-cms-cover {
@@ -105,5 +163,21 @@ function deleteIssue(id) {
   font-size: 0.75rem;
   color: var(--neu-text-muted);
   font-style: italic;
+}
+
+.neu-cms-icon-btn--success {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+}
+
+.neu-cms-icon-btn--success:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(76, 175, 80, 0.1));
+}
+
+.neu-cms-icon-btn--warning {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+}
+
+.neu-cms-icon-btn--warning:hover {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.25), rgba(255, 193, 7, 0.1));
 }
 </style>

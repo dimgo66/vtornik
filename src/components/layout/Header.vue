@@ -2,11 +2,16 @@
   <header class="neu-header">
     <div class="neu-header__inner">
       <RouterLink to="/" class="neu-header__logo">
-        <span class="logo-main">ВТОРНИК</span>
-        <span class="logo-sub">литературно-художественный журнал</span>
+        <img :src="isDark ? logoDark : logoLight" alt="ВТОРНИК" class="neu-header__logo-img" />
       </RouterLink>
-      
-      <nav class="neu-header__nav">
+
+      <button class="neu-header__burger" @click="toggleMenu" :class="{ 'neu-header__burger--active': isMenuOpen }">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="neu-header__nav" :class="{ 'neu-header__nav--open': isMenuOpen }">
         <RouterLink to="/" class="neu-header__nav-link">Главная</RouterLink>
         <RouterLink to="/authors" class="neu-header__nav-link">Авторы</RouterLink>
         <RouterLink to="/about" class="neu-header__nav-link">О журнале</RouterLink>
@@ -21,6 +26,31 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
+import { ref, onMounted } from 'vue'
+
+const isMenuOpen = ref(false)
+const isDark = ref(false)
+
+const logoLight = new URL('@/assets/images/ВТОРНИК OK.svg', import.meta.url).href
+const logoDark = new URL('@/assets/images/ВТОРНИК OKdark.svg', import.meta.url).href
+
+onMounted(() => {
+  isDark.value = document.documentElement.classList.contains('dark')
+  
+  const observer = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark')
+  })
+  
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+})
+
+function toggleMenu() {
+  isMenuOpen.value = !isMenuOpen.value
+  document.body.classList.toggle('menu-open', isMenuOpen.value)
+}
 </script>
 
 <style scoped>
@@ -32,9 +62,10 @@ import ThemeToggle from '@/components/ui/ThemeToggle.vue'
   box-shadow:
     0 4px 8px var(--neu-shadow-dark),
     0 -2px 4px var(--neu-shadow-light);
-  padding: var(--space-md) 0;
+  padding: 0;
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--neu-shadow-dark);
+  height: 80px;
 }
 
 .neu-header__inner {
@@ -45,36 +76,24 @@ import ThemeToggle from '@/components/ui/ThemeToggle.vue'
   align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
+  height: 100%;
 }
 
 .neu-header__logo {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   text-decoration: none;
   flex-shrink: 0;
 }
 
-.logo-main {
-  font-family: var(--fj);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--neu-primary);
-  letter-spacing: 0.15em;
-  line-height: 1;
-  transition: color var(--transition-fast);
+.neu-header__logo-img {
+  height: 80px;
+  width: auto;
+  transition: opacity var(--transition-fast);
 }
 
-.logo-sub {
-  font-family: var(--fd);
-  font-size: 0.75rem;
-  font-style: italic;
-  color: var(--neu-text-secondary);
-  letter-spacing: 0.05em;
-  margin-top: var(--space-xs);
-}
-
-.neu-header__logo:hover .logo-main {
-  color: var(--neu-primary-dark);
+.neu-header__logo:hover .neu-header__logo-img {
+  opacity: 0.8;
 }
 
 .neu-header__nav {
@@ -85,10 +104,10 @@ import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 }
 
 .neu-header__nav-link {
-  font-family: var(--fnr);
-  font-size: 0.75rem;
+  font-family: var(--fj);
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--neu-text-secondary);
   text-decoration: none;
@@ -130,28 +149,85 @@ import ThemeToggle from '@/components/ui/ThemeToggle.vue'
   flex-shrink: 0;
 }
 
+/* Burger */
+.neu-header__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 101;
+}
+
+.neu-header__burger span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: var(--neu-primary);
+  border-radius: 2px;
+  transition: all var(--transition-fast);
+}
+
+.neu-header__burger--active span:nth-child(1) {
+  transform: translateY(10.5px) rotate(45deg);
+}
+
+.neu-header__burger--active span:nth-child(2) {
+  opacity: 0;
+}
+
+.neu-header__burger--active span:nth-child(3) {
+  transform: translateY(-10.5px) rotate(-45deg);
+}
+
 @media (max-width: 768px) {
+  .neu-header__burger {
+    display: flex;
+  }
+
   .neu-header__inner {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
-  
+
   .neu-header__logo {
-    width: 100%;
-    align-items: center;
-    margin-bottom: var(--space-sm);
+    margin: 0 auto;
   }
-  
+
   .neu-header__nav {
+    position: fixed;
+    top: 0;
+    left: -100%;
     width: 100%;
+    height: 100vh;
+    background: linear-gradient(145deg, var(--neu-bg-primary), var(--neu-bg-secondary));
+    flex-direction: column;
     justify-content: center;
-    margin-left: 0;
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--neu-shadow-dark);
-    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-md);
+    transition: left var(--transition-slow);
+    z-index: 100;
+    overflow-y: auto;
   }
-  
+
+  .neu-header__nav--open {
+    left: 0;
+  }
+
+  .neu-header__nav-link {
+    font-size: 1.2rem;
+    padding: var(--space-sm) var(--space-md);
+  }
+
   .neu-header__divider {
     display: none;
+  }
+
+  body.menu-open {
+    overflow: hidden;
   }
 }
 </style>

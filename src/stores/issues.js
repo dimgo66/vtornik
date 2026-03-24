@@ -16,13 +16,14 @@ export const useIssuesStore = defineStore('issues', {
 
   getters: {
     allIssues: (state) => state.issues,
-    
+
     getIssueById: (state) => (id) => {
       return state.issues.find(issue => issue.id === id)
     },
 
     getLatestIssue: (state) => {
-      return state.issues[0] || null
+      const published = state.issues.filter(issue => issue.status === 'published')
+      return published[0] || null
     },
 
     issuesCount: (state) => state.issues.length

@@ -2,6 +2,31 @@
    BASE STYLES — ВТОРНИК
    ══════════════════════════════════════════════════ */
 
+/* ── NewJournal Font ── */
+@font-face {
+  font-family: 'NewJournal';
+  src: url('@/assets/fonts/newjournalplain.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NewJournal';
+  src: url('@/assets/fonts/newjournalbold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NewJournal';
+  src: url('@/assets/fonts/newjournalitalic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -22,6 +47,12 @@ body {
   background-color: #fff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+body.menu-open {
+  overflow: hidden;
 }
 
 /* ── Typography ── */

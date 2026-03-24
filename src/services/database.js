@@ -43,7 +43,8 @@ export async function fetchIssues() {
   return data.map(issue => ({
     ...issue,
     coverImageUrl: issue.cover_image_url,
-    coverVideoUrl: issue.cover_video_url
+    coverVideoUrl: issue.cover_video_url,
+    status: issue.status || 'draft'
   }))
 }
 
@@ -68,7 +69,8 @@ export async function createIssue(issue) {
     editor: issue.editor,
     description: issue.description,
     cover_image_url: issue.coverImageUrl,
-    cover_video_url: issue.coverVideoUrl
+    cover_video_url: issue.coverVideoUrl,
+    status: issue.status || 'draft'
   }
   const data = await apiRequest('/issues', {
     method: 'POST',
@@ -88,7 +90,8 @@ export async function updateIssue(id, updates) {
   if (updates.description !== undefined) dbUpdates.description = updates.description
   if (updates.coverImageUrl !== undefined) dbUpdates.cover_image_url = updates.coverImageUrl
   if (updates.coverVideoUrl !== undefined) dbUpdates.cover_video_url = updates.coverVideoUrl
-  
+  if (updates.status !== undefined) dbUpdates.status = updates.status
+
   const data = await apiRequest(`/issues?id=eq.${id}`, {
     method: 'PATCH',
     body: JSON.stringify(dbUpdates)
