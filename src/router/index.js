@@ -13,6 +13,7 @@ import CMSArticles from '@/pages/cms/CMSArticles.vue'
 import CMSAuthors from '@/pages/cms/CMSAuthors.vue'
 import CMSPrepare from '@/pages/cms/CMSPrepare.vue'
 import CMSSpine from '@/pages/cms/CMSSpine.vue'
+import CMSMedia from '@/pages/cms/CMSMedia.vue'
 import CMSEditor from '@/pages/cms/CMSEditor.vue'
 import SimpleEditor from '@/pages/cms/SimpleEditor.vue'
 import TestEditor from '@/pages/cms/TestEditor.vue'
@@ -36,15 +37,16 @@ const routes = [
   { path: '/cms/test/:id', name: 'cms-test', component: TestEditor },
   
   // CMS pages with children
-  { 
-    path: '/cms', 
-    name: 'cms', 
+  {
+    path: '/cms',
+    name: 'cms',
     component: CMS,
     children: [
       { path: '', redirect: '/cms/issues' },
       { path: 'issues', name: 'cms-issues', component: CMSIssues },
       { path: 'articles', name: 'cms-articles', component: CMSArticles },
       { path: 'authors', name: 'cms-authors', component: CMSAuthors },
+      { path: 'media', name: 'cms-media', component: CMSMedia },
       { path: 'prepare', name: 'cms-prepare', component: CMSPrepare },
       { path: 'spine', name: 'cms-spine', component: CMSSpine }
     ]

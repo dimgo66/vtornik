@@ -7,8 +7,9 @@
 src/components/
 ├── layout/      # Header, Footer (общие)
 ├── cards/       # IssueCard, EssayCard, AuthorCard (переиспользуемые)
-├── modals/      # Modal, ArticleModal, AuthorModal
-└── ui/          # Button, ThemeToggle (базовые UI)
+├── modals/      # Modal, ArticleModal, AuthorModal, MediaModal
+├── ui/          # Button, ThemeToggle (базовые UI)
+└── cms/         # MediaFolderTree, MediaBrowser, MediaUpload (CMS компоненты)
 ```
 **Важно:** При создании новых компонентов следовать этой классификации.
 
@@ -80,6 +81,7 @@ export const useXStore = defineStore('x', {
 /cms/issues          → Issues CRUD
 /cms/articles        → Articles CRUD
 /cms/authors         → Authors CRUD
+/cms/media           → Media Manager (новый!)
 /cms/prepare         → Prepare for print
 /cms/spine           → Spine calculator
 ```
@@ -125,6 +127,37 @@ export const useXStore = defineStore('x', {
 }
 ```
 
+**Медиафайл:**
+```javascript
+{
+  id: 'uuid',
+  bucket_id: 'images', // images/videos/audio/documents
+  name: 'img_1234567890_abcdef.jpg', // уникальное имя
+  original_name: 'photo.jpg', // оригинальное имя
+  size: 102400, // размер в байтах
+  type: 'image/jpeg', // MIME type
+  url: '/uploads/images/img_1234567890_abcdef.jpg',
+  path: '/uploads/images/img_1234567890_abcdef.jpg',
+  folder_id: 'uuid', // опционально
+  alt_text: 'Описание', // опционально
+  description: '...', // опционально
+  width: 1920, // опционально
+  height: 1080, // опционально
+  created_at: '2026-03-24T12:00:00Z'
+}
+```
+
+**Папка:**
+```javascript
+{
+  id: 'uuid',
+  name: 'Изображения',
+  parent_id: 'uuid', // null для корневых
+  created_at: '2026-03-24T12:00:00Z',
+  updated_at: '2026-03-24T12:00:00Z'
+}
+```
+
 ## ⚠️ Известные проблемы
 
 1. **Данные в JSON** — нет сохранения между сессиями
@@ -155,6 +188,12 @@ export const useXStore = defineStore('x', {
 - Соответствует литературному характеру журнала
 - Тёплая палитра создаёт уютную атмосферу
 - Отличается от стандартных плоских дизайнов
+
+### Медиа-менеджер (март 2026)
+- Хранение метаданных в PostgreSQL (storage_objects, storage_folders)
+- Файлы в IndexedDB (локально) или Supabase Storage (продакшен)
+- Иерархическая структура папок с рекурсивным доступом
+- Поддержка всех типов файлов: изображения, видео, аудио, документы
 
 ## 🛠️ Шаблоны использования инструментов
 

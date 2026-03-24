@@ -39,6 +39,7 @@ const navItems = [
   { path: '/cms/issues', name: 'Номера', icon: '📚' },
   { path: '/cms/articles', name: 'Статьи', icon: '📄' },
   { path: '/cms/authors', name: 'Авторы', icon: '✍️' },
+  { path: '/cms/media', name: 'Медиа', icon: '📁' },
   { path: '/cms/prepare', name: 'В печать', icon: '🖨️' },
   { path: '/cms/spine', name: 'Корешок', icon: '📐' }
 ]
