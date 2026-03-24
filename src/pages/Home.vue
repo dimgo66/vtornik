@@ -296,7 +296,7 @@ function scrollToIssues() {
 
 .hero-num {
   font-family: var(--fj);
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--neu-primary);
   line-height: 1;
