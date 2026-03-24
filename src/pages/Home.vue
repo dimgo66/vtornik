@@ -32,9 +32,9 @@
             <!-- Логотип и информация поверх видео/изображения -->
             <div class="hero-branding">
               <img src="@/assets/images/ВТОРНИК white.svg" alt="ВТОРНИК" class="hero-logo" />
+              <div class="hero-full-number">№ {{ latestIssue?.num }} ({{ latestIssue?.serial }})</div>
               <div class="hero-issue-info">
-                <span class="hero-issue-number">№ {{ latestIssue?.num }} ({{ latestIssue?.serial }})</span>
-                <span class="hero-issue-month">{{ latestIssue?.month?.toUpperCase() }} {{ latestIssue?.year }}</span>
+                <span class="hero-issue-number">{{ latestIssue?.month?.toUpperCase() }} {{ latestIssue?.year }}</span>
               </div>
               <div v-if="latestIssue?.theme" class="hero-issue-theme">{{ latestIssue.theme }}</div>
             </div>
@@ -297,7 +297,8 @@ function scrollToIssues() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 10%;
   z-index: 10;
   pointer-events: none;
 }
@@ -307,7 +308,7 @@ function scrollToIssues() {
   max-width: 320px;
   height: auto;
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .hero-issue-info {
@@ -332,6 +333,16 @@ function scrollToIssues() {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.hero-full-number {
+  font-family: var(--fj);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+  margin-bottom: var(--space-sm);
+  letter-spacing: 0.05em;
 }
 
 .hero-issue-theme {
