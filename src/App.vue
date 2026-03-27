@@ -10,6 +10,7 @@
     <template v-else>
       <RouterView />
     </template>
+    <ToastNotifications />
   </div>
 </template>
 
@@ -18,6 +19,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Header from '@/components/layout/Header.vue'
 import Footer from '@/components/layout/Footer.vue'
+import ToastNotifications from '@/components/ui/ToastNotifications.vue'
 
 const route = useRoute()
 

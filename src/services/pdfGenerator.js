@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf'
 
 // ══════════════════════════════════════════════════
 //  PDF GENERATOR — ВТОРНИК
-//  Полная копия из vtornik-v3.html с адаптацией
+//  Адаптирован для текущей структуры данных
 // ══════════════════════════════════════════════════
 
 const BLEED = 3 // вылет под обрез
@@ -12,17 +12,22 @@ const CONTENT_WIDTH = 148
 const BLEED_LEFT = 3
 
 // Разделы журнала
-const SECTIONS = [
+export const SECTIONS = [
   {id:'prose',     name:'Отдел прозы',     cls:'sp', color:'#8B1A1A'},
   {id:'poetry',    name:'Отдел поэзии',    cls:'po', color:'#1A408B'},
   {id:'profundis', name:'De Profundis',    cls:'pr', color:'#1A6B3C'},
   {id:'cinema',    name:'Город кино',      cls:'ci', color:'#7A3C1A'},
   {id:'interview', name:'Интервью',        cls:'in', color:'#4A1A8B'},
   {id:'reading',   name:'Домашнее чтение', cls:'rd', color:'#6B6B1A'},
+  {id:'essays',    name:'Эссе',            cls:'es', color:'#7A1515'},
+  {id:'books',     name:'Книги',           cls:'bk', color:'#5A5A5A'},
+  {id:'audio',     name:'Аудиокниги',      cls:'au', color:'#1A8B6B'},
+  {id:'radio',     name:'Радио',           cls:'ra', color:'#8B4A1A'},
+  {id:'culture',   name:'И о культуре...', cls:'cu', color:'#6B1A8B'},
 ]
 
 // Helpers
-const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
+export const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
 
 const hexToRgb = (h) => ({
   r: parseInt(h.slice(1, 3), 16),
@@ -30,14 +35,14 @@ const hexToRgb = (h) => ({
   b: parseInt(h.slice(5, 7), 16)
 })
 
-const getArticleWords = (body) => {
+export const getArticleWords = (body) => {
   if (!body) return 0
   const tmp = document.createElement('div')
   tmp.innerHTML = body
   return tmp.textContent.trim().split(/\s+/).filter(Boolean).length
 }
 
-const wordsToPages = (w) => Math.max(1, Math.ceil(w / 220))
+export const wordsToPages = (w) => Math.max(1, Math.ceil(w / 220))
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 

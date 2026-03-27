@@ -9,10 +9,10 @@
             ← Сайт
           </RouterLink>
         </div>
-        
+
         <nav class="neu-cms-nav">
-          <RouterLink 
-            v-for="item in navItems" 
+          <RouterLink
+            v-for="item in navItems"
             :key="item.path"
             :to="item.path"
             class="neu-cms-nav-link"
@@ -22,6 +22,15 @@
             {{ item.name }}
           </RouterLink>
         </nav>
+
+        <div class="neu-cms-sidebar-footer">
+          <div v-if="userEmail" class="neu-cms-user-info">
+            <span class="neu-cms-user-email">{{ userEmail }}</span>
+          </div>
+          <button @click="handleLogout" class="neu-cms-logout-btn">
+            🚪 Выйти
+          </button>
+        </div>
       </aside>
 
       <!-- Main Content -->
@@ -33,7 +42,14 @@
 </template>
 
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const userEmail = computed(() => authStore.userEmail)
 
 const navItems = [
   { path: '/cms/issues', name: 'Номера', icon: '📚' },
@@ -43,6 +59,13 @@ const navItems = [
   { path: '/cms/prepare', name: 'В печать', icon: '🖨️' },
   { path: '/cms/spine', name: 'Корешок', icon: '📐' }
 ]
+
+async function handleLogout() {
+  const result = await authStore.logout()
+  if (result.success) {
+    router.push('/cms/login')
+  }
+}
 </script>
 
 <style scoped>
@@ -156,6 +179,61 @@ const navItems = [
 
 .neu-cms-nav-icon {
   font-size: 1.2rem;
+}
+
+.neu-cms-sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--neu-shadow-dark);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.neu-cms-user-info {
+  padding: var(--space-xs) var(--space-sm);
+  background: linear-gradient(145deg, var(--neu-bg-secondary), var(--neu-bg-primary));
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 2px 2px 4px var(--neu-shadow-dark),
+    inset -2px -2px 4px var(--neu-shadow-light);
+}
+
+.neu-cms-user-email {
+  font-family: var(--fnr);
+  font-size: 0.7rem;
+  color: var(--neu-text-secondary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neu-cms-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, var(--neu-bg-secondary), var(--neu-bg-primary));
+  box-shadow:
+    2px 2px 4px var(--neu-shadow-dark),
+    -2px -2px 4px var(--neu-shadow-light);
+  color: var(--neu-text-secondary);
+  font-family: var(--fnr);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.neu-cms-logout-btn:hover {
+  color: var(--neu-error);
+  box-shadow:
+    inset 2px 2px 4px var(--neu-shadow-dark),
+    inset -2px -2px 4px var(--neu-shadow-light);
 }
 
 .neu-cms-main {

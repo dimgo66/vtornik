@@ -40,12 +40,46 @@ export const useUIStore = defineStore('ui', {
       this.sidebarOpen = false
     },
 
-    showNotification(message, type = 'info') {
+    /**
+     * Показать уведомление
+     * @param {string} message - Текст уведомления
+     * @param {'success'|'error'|'warning'|'info'} type - Тип уведомления
+     * @param {number} duration - Длительность в мс (по умолчанию 3000)
+     */
+    showNotification(message, type = 'info', duration = 3000) {
       const id = Date.now()
       this.notifications.push({ id, message, type })
       setTimeout(() => {
         this.removeNotification(id)
-      }, 3000)
+      }, duration)
+    },
+
+    /**
+     * Показать успешное уведомление
+     */
+    showSuccess(message) {
+      this.showNotification(message, 'success')
+    },
+
+    /**
+     * Показать уведомление об ошибке
+     */
+    showError(message) {
+      this.showNotification(message, 'error', 5000)
+    },
+
+    /**
+     * Показать предупреждение
+     */
+    showWarning(message) {
+      this.showNotification(message, 'warning')
+    },
+
+    /**
+     * Показать информационное уведомление
+     */
+    showInfo(message) {
+      this.showNotification(message, 'info')
     },
 
     removeNotification(id) {

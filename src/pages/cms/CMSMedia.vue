@@ -42,9 +42,6 @@
           <button class="neu-btn neu-btn--primary neu-btn--full" @click="showUploadSection = !showUploadSection">
             {{ showUploadSection ? 'Скрыть загрузку' : '📤 Загрузить файлы' }}
           </button>
-          <button class="neu-btn neu-btn--secondary neu-btn--full" @click="openCreateFolderDialog">
-            📁 Новая папка
-          </button>
         </div>
       </aside>
 
@@ -141,7 +138,7 @@
           type="text"
           class="neu-media-dialog-input"
           placeholder="Название папки"
-          @keyup.enter="createFolder"
+          @keyup.enter.prevent="createFolder"
           ref="folderInput"
         />
         <div class="neu-media-dialog-actions">
@@ -198,12 +195,14 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useMediaStore } from '@/stores/media'
+import { useUIStore } from '@/stores/ui'
 import { getFileIcon } from '@/services/mediaService'
 import MediaFolderTree from '@/components/cms/MediaFolderTree.vue'
 import MediaBrowser from '@/components/cms/MediaBrowser.vue'
 import MediaUpload from '@/components/cms/MediaUpload.vue'
 
 const mediaStore = useMediaStore()
+const uiStore = useUIStore()
 
 // State
 const currentFolderId = ref(null)
@@ -298,7 +297,7 @@ async function createFolder() {
     closeCreateFolderDialog()
   } catch (error) {
     console.error('Failed to create folder:', error)
-    alert('Ошибка при создании папки: ' + error.message)
+    // Ошибка уже показана в store
   }
 }
 
@@ -318,7 +317,7 @@ async function confirmDeleteFolder(folderId) {
     await mediaStore.deleteFolder(folderId)
   } catch (error) {
     console.error('Failed to delete folder:', error)
-    alert('Ошибка при удалении папки: ' + error.message)
+    // Ошибка уже показана в store
   }
 }
 
@@ -328,7 +327,7 @@ function handleUploadComplete(file) {
 
 function handleUploadError(error) {
   console.error('Upload error:', error)
-  alert('Ошибка загрузки: ' + error.message)
+  uiStore.showError('Ошибка загрузки: ' + error.message)
 }
 
 async function deleteFile(fileId) {
@@ -336,7 +335,7 @@ async function deleteFile(fileId) {
     await mediaStore.deleteFile(fileId)
   } catch (error) {
     console.error('Failed to delete file:', error)
-    alert('Ошибка при удалении файла: ' + error.message)
+    // Ошибка уже показана в store
   }
 }
 
@@ -365,7 +364,7 @@ async function saveMetadata() {
     closeEditDialog()
   } catch (error) {
     console.error('Failed to update file:', error)
-    alert('Ошибка при сохранении: ' + error.message)
+    // Ошибка уже показана в store
   }
 }
 
@@ -379,7 +378,9 @@ function closePreviewModal() {
 
 // Init
 onMounted(async () => {
+  // Инициализация store загружает папки и файлы
   await mediaStore.init()
+  console.log('CMSMedia mounted: Folders=', mediaStore.folders.length, 'Files=', mediaStore.files.length)
 })
 </script>
 
@@ -619,9 +620,8 @@ onMounted(async () => {
   padding: var(--space-lg);
   min-width: 400px;
   max-width: 90vw;
-  box-shadow:
-    8px 8px 16px var(--neu-shadow-dark),
-    -8px -8px 16px var(--neu-shadow-light);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .neu-media-dialog--wide {
@@ -641,25 +641,21 @@ onMounted(async () => {
 .neu-media-form-textarea {
   width: 100%;
   padding: var(--space-sm) var(--space-md);
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, var(--neu-bg-secondary), var(--neu-bg-primary));
-  box-shadow:
-    inset 2px 2px 4px var(--neu-shadow-dark),
-    inset -2px -2px 4px var(--neu-shadow-light);
+  background: #fff;
   font-family: var(--fn);
   font-size: 0.9rem;
   color: var(--neu-text-primary);
   margin-bottom: var(--space-md);
+  transition: border-color var(--transition-fast);
 }
 
 .neu-media-dialog-input:focus,
 .neu-media-form-input:focus,
 .neu-media-form-textarea:focus {
   outline: none;
-  box-shadow:
-    inset 3px 3px 6px var(--neu-shadow-dark),
-    inset -3px -3px 6px var(--neu-shadow-light);
+  border-color: var(--neu-primary);
 }
 
 .neu-media-form-group {

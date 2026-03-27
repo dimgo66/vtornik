@@ -10,9 +10,11 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+      JWT_SECRET: your-super-secret-jwt-token-change-in-production
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./supabase-schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./supabase-auth.sql:/docker-entrypoint-initdb.d/auth.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -24,7 +26,7 @@ services:
     image: postgrest/postgrest:v12.0.1
     container_name: vtornik-rest
     ports:
-      - "3004:3000"
+      - "3000:3000"
     environment:
       PGRST_DB_URI: postgres://postgres:postgres@supabase-db:5432/postgres
       PGRST_DB_SCHEMAS: public
@@ -34,6 +36,32 @@ services:
       supabase-db:
         condition: service_healthy
     restart: unless-stopped
+
+  # GoTrue Auth (Supabase Auth) - отключен, используем прямую аутентификацию через БД
+  # supabase-auth:
+  #   image: supabase/gotrue:v2.96.0
+  #   container_name: vtornik-auth
+  #   ports:
+  #     - "9999:9999"
+  #   environment:
+  #     GOTRUE_API_HOST: 0.0.0.0
+  #     GOTRUE_API_PORT: 9999
+  #     API_EXTERNAL_URL: http://localhost:9999
+  #     GOTRUE_DB_DRIVER: postgres
+  #     GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:postgres@supabase-db:5432/postgres?sslmode=disable&currentSchema=auth
+  #     GOTRUE_JWT_SECRET: your-super-secret-jwt-token-change-in-production
+  #     GOTRUE_JWT_EXP: 3600
+  #     GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+  #     GOTRUE_EXTERNAL_EMAIL_ENABLED: true
+  #     GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: false
+  #     GOTRUE_MAILER_AUTOCONFIRM: true
+  #     GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: false
+  #     GOTRUE_SITE_URL: http://localhost:3003
+  #     GOTRUE_URI_ALLOW_LIST: http://localhost:3003
+  #   depends_on:
+  #     supabase-db:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:

@@ -64,6 +64,11 @@
   gap: var(--space-xs);
 }
 
+.neu-media-folder-node {
+  display: block;
+  width: 100%;
+}
+
 .neu-media-folder-item {
   display: flex;
   align-items: center;

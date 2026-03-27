@@ -24,28 +24,21 @@
       ref="fileInput"
       type="file"
       multiple
-      :accept="acceptedTypes"
+      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
       class="neu-media-upload-input"
       @change="handleFileSelect"
     />
 
-    <!-- File Type Selector -->
+    <!-- Folder Selection -->
     <div class="neu-media-upload-options">
       <div class="neu-media-upload-option">
-        <label class="neu-media-upload-label">Тип файлов:</label>
-        <select v-model="selectedBucket" class="neu-media-upload-select">
-          <option value="images">🖼️ Изображения</option>
-          <option value="videos">🎬 Видео</option>
-          <option value="audio">🎵 Аудио</option>
-          <option value="documents">📄 Документы</option>
+        <label class="neu-media-upload-label">📁 Папка назначения:</label>
+        <select v-model="selectedFolderId" class="neu-media-upload-select">
+          <option :value="null">— В корневую папку —</option>
+          <option v-for="folder in folders" :key="folder.id" :value="folder.id">
+            {{ folder.name }}
+          </option>
         </select>
-      </div>
-
-      <div class="neu-media-upload-option">
-        <label class="neu-media-upload-label">
-          <input type="checkbox" v-model="compressImages" />
-          Сжимать изображения
-        </label>
       </div>
     </div>
 
@@ -102,21 +95,35 @@ const mediaStore = useMediaStore()
 
 const fileInput = ref(null)
 const isDragOver = ref(false)
-const selectedBucket = ref('images')
-const compressImages = ref(false)
+const selectedFolderId = ref(null)
 const uploadingFiles = ref([])
 const uploadedFiles = ref([])
 
-const maxFileSize = 50 // MB для видео, 5MB для изображений
+const maxFileSize = 50 // MB
 
-const acceptedTypes = computed(() => {
-  const types = {
-    images: 'image/*',
-    videos: 'video/*',
-    audio: 'audio/*',
-    documents: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'
-  }
-  return types[selectedBucket.value]
+// Получить список папок для выбора
+const folders = computed(() => mediaStore.folders || [])
+
+// Автоматическое определение типа файла (bucket)
+function getBucketForFile(file) {
+  if (file.type.startsWith('image/')) return 'images'
+  if (file.type.startsWith('video/')) return 'videos'
+  if (file.type.startsWith('audio/')) return 'audio'
+  return 'documents'
+}
+
+// Получить имя текущей папки (из props для контекста)
+const currentFolderName = computed(() => {
+  if (!props.folderId) return ''
+  const folder = mediaStore.folders.find(f => f.id === props.folderId)
+  return folder?.name || ''
+})
+
+// Получить имя выбранной папки назначения
+const selectedFolderName = computed(() => {
+  if (!selectedFolderId.value) return ''
+  const folder = mediaStore.folders.find(f => f.id === selectedFolderId.value)
+  return folder?.name || ''
 })
 
 function triggerFileInput() {
@@ -140,27 +147,14 @@ function handleDrop(event) {
 }
 
 async function uploadFiles(files) {
-  // Фильтрация по типу
-  const validFiles = files.filter(file => {
-    const bucket = selectedBucket.value
-    if (bucket === 'images') return file.type.startsWith('image/')
-    if (bucket === 'videos') return file.type.startsWith('video/')
-    if (bucket === 'audio') return file.type.startsWith('audio/')
-    if (bucket === 'documents') {
-      return file.type.includes('pdf') || file.type.includes('word') || 
-             file.type.includes('excel') || file.type.includes('powerpoint') ||
-             file.type === 'text/plain'
-    }
-    return true
-  })
-
-  if (validFiles.length === 0) {
-    emit('upload-error', new Error('Нет файлов подходящего типа'))
-    return
-  }
+  // Автоматически определяем тип для каждого файла
+  const filesWithBuckets = files.map(file => ({
+    file,
+    bucket: getBucketForFile(file)
+  }))
 
   // Добавляем файлы в очередь загрузки
-  validFiles.forEach(file => {
+  filesWithBuckets.forEach(({ file }) => {
     uploadingFiles.value.push({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
@@ -172,25 +166,24 @@ async function uploadFiles(files) {
   })
 
   // Загружаем файлы
-  for (let i = 0; i < validFiles.length; i++) {
-    const file = validFiles[i]
+  for (let i = 0; i < filesWithBuckets.length; i++) {
+    const { file, bucket } = filesWithBuckets[i]
     const uploadItem = uploadingFiles.value.find(f => f.name === file.name)
 
     try {
       uploadItem.status = 'uploading'
       uploadItem.progress = 10
 
-      // Сжатие изображений если включено
-      let fileToUpload = file
-      if (compressImages.value && file.type.startsWith('image/')) {
-        fileToUpload = await compressImageFile(file)
-      }
+      const uploadedFile = await mediaStore.uploadFiles(
+        [file],
+        selectedFolderId.value,  // Используем выбранную папку
+        selectedFolderName.value,
+        bucket
+      )
 
-      const uploadedFile = await mediaStore.uploadFiles([fileToUpload], props.folderId, selectedBucket.value)
-      
       uploadItem.progress = 100
       uploadItem.status = 'complete'
-      
+
       uploadedFiles.value.push({
         ...uploadedFile[0],
         url: uploadedFile[0].url
@@ -227,50 +220,6 @@ function formatFileSize(bytes) {
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-}
-
-async function compressImageFile(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      let width = img.width
-      let height = img.height
-
-      // Максимальный размер 1920x1080
-      const maxWidth = 1920
-      const maxHeight = 1080
-
-      if (width > maxWidth) {
-        height = (height * maxWidth) / width
-        width = maxWidth
-      }
-      if (height > maxHeight) {
-        width = (width * maxHeight) / height
-        height = maxHeight
-      }
-
-      canvas.width = width
-      canvas.height = height
-
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0, width, height)
-
-      canvas.toBlob(
-        blob => {
-          const compressedFile = new File([blob], file.name, {
-            type: 'image/jpeg',
-            lastModified: Date.now()
-          })
-          resolve(compressedFile)
-        },
-        'image/jpeg',
-        0.8
-      )
-    }
-    img.onerror = reject
-    img.src = URL.createObjectURL(file)
-  })
 }
 </script>
 

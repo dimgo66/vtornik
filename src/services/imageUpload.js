@@ -6,7 +6,7 @@
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 const UPLOAD_DIR = '/uploads'
-const API_URL = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:3004'
+const API_URL = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:3000'
 
 /**
  * Загрузка файла (изображение или видео)

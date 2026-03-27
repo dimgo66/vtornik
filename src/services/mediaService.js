@@ -3,14 +3,17 @@
  * Работает с таблицами storage_objects и storage_folders через PostgREST
  */
 
-const API_URL = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:3004'
+// Используем относительный URL для Vite dev-сервера
+const API_URL = ''
+const UPLOAD_SERVER_URL = 'http://localhost:3001'
 
 // ══════════════════════════════════════════════════
 //  Вспомогательные функции
 // ══════════════════════════════════════════════════
 
 async function apiRequest(endpoint, options = {}) {
-  const url = `${API_URL}${endpoint}`
+  // Используем относительный URL (Vite proxy)
+  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -88,7 +91,8 @@ export async function fetchFolderById(id) {
 export async function createFolder(name, parentId = null) {
   const folder = {
     name,
-    parent_id: parentId
+    parent_id: parentId,
+    folder_path: name  // Добавляем folder_path для совместимости
   }
   const data = await apiRequest('/storage_folders', {
     method: 'POST',
@@ -124,6 +128,7 @@ export async function deleteFolder(id) {
  * Построить дерево папок
  */
 export function buildFolderTree(folders) {
+  console.log('buildFolderTree: folders=', folders.length, folders.map(f => f.name))
   const folderMap = new Map()
   const rootFolders = []
 
@@ -145,6 +150,7 @@ export function buildFolderTree(folders) {
     }
   })
 
+  console.log('buildFolderTree: rootFolders=', rootFolders.length)
   return rootFolders
 }
 
@@ -177,7 +183,9 @@ export async function fetchFiles(filters = {}) {
     query += `${separator}type=like.${filters.type}%`
   }
 
+  console.log('fetchFiles: query=', query)
   const data = await apiRequest(query)
+  console.log('fetchFiles: API returned', data.length, 'files')
   return data.map(file => ({
     ...file,
     fileType: getFileType(file.type),
@@ -222,44 +230,33 @@ export async function fetchFolderFilesRecursive(folderId, bucketId = null) {
 }
 
 /**
- * Загрузить файл
+ * Загрузить файл через FormData
  */
-export async function uploadFile(file, folderId = null, bucketId = 'images') {
-  // Генерация уникального ID
-  const prefix = bucketId === 'videos' ? 'vid' : bucketId === 'audio' ? 'aud' : 'img'
-  const id = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  const extension = file.name.split('.').pop()
-  const filename = `${id}.${extension}`
-  const relativePath = `/uploads/${bucketId}/${filename}`
-
-  // Чтение файла как Base64 для локального хранения
-  const base64Data = await readFileAsBase64(file)
-
-  // Сохраняем метаданные в базу через PostgREST API
-  const metadata = {
-    bucket_id: bucketId,
-    name: filename,
-    original_name: file.name,
-    size: file.size,
-    type: file.type,
-    url: relativePath,
-    path: relativePath,
-    folder_id: folderId,
-    width: file.width || null,
-    height: file.height || null
-  }
+export async function uploadFile(file, folderId = null, folderName = '', bucketId = 'images') {
+  // Создание FormData
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('bucket_id', bucketId)
+  formData.append('folder_id', folderId || '')
+  formData.append('folder_name', folderName)
+  formData.append('original_name', file.name)
 
   try {
-    const response = await apiRequest('/storage_objects', {
+    // Отправка через Vite proxy на Upload Server
+    const response = await fetch('/api/upload', {
       method: 'POST',
-      body: JSON.stringify(metadata)
+      body: formData
     })
 
-    const savedFile = response[0]
-    console.log(`Файл сохранён: ${relativePath} (${formatFileSize(file.size)})`)
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: response.statusText }))
+      throw new Error(error.error || 'Ошибка загрузки')
+    }
 
-    // Для локальной разработки сохраняем файл в IndexedDB или localStorage
-    await saveFileLocally(relativePath, base64Data)
+    const result = await response.json()
+    const savedFile = result.file
+
+    console.log(`Файл загружен: ${savedFile.url} (${formatFileSize(savedFile.size)})`)
 
     return {
       ...savedFile,
@@ -267,7 +264,42 @@ export async function uploadFile(file, folderId = null, bucketId = 'images') {
       sizeFormatted: formatFileSize(savedFile.size)
     }
   } catch (error) {
-    console.error('Ошибка сохранения в базу:', error)
+    console.error('Ошибка загрузки файла:', error)
+    throw error
+  }
+}
+
+/**
+ * Загрузить несколько файлов
+ */
+export async function uploadMultipleFiles(files, folderId = null, folderName = '', bucketId = 'images') {
+  const formData = new FormData()
+  files.forEach(file => {
+    formData.append('files', file)
+  })
+  formData.append('bucket_id', bucketId)
+  formData.append('folder_id', folderId || '')
+  formData.append('folder_name', folderName)
+
+  try {
+    const response = await fetch('/api/upload/multiple', {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: response.statusText }))
+      throw new Error(error.error || 'Ошибка загрузки')
+    }
+
+    const result = await response.json()
+    return result.files.map(file => ({
+      ...file,
+      fileType: getFileType(file.type),
+      sizeFormatted: formatFileSize(file.size)
+    }))
+  } catch (error) {
+    console.error('Ошибка загрузки файлов:', error)
     throw error
   }
 }
@@ -294,7 +326,7 @@ export async function updateFile(id, updates) {
  */
 export async function deleteFile(id) {
   await apiRequest(`/storage_objects?id=eq.${id}`, { method: 'DELETE' })
-  await deleteFileLocally(id)
+  // Файлы в файловой системе не удаляем автоматически
   return true
 }
 
@@ -362,74 +394,14 @@ export async function fetchTotalStatistics() {
 }
 
 // ══════════════════════════════════════════════════
-//  LOCAL STORAGE (Локальное хранение файлов)
+//  FILE URL (Получение URL файла)
 // ══════════════════════════════════════════════════
 
-const DB_NAME = 'vtornik_media'
-const DB_VERSION = 1
-const STORE_NAME = 'files'
-
-let db = null
-
-async function getDB() {
-  if (db) return db
-
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-
-    request.onerror = () => reject(request.error)
-    request.onsuccess = () => {
-      db = request.result
-      resolve(db)
-    }
-
-    request.onupgradeneeded = (event) => {
-      const database = event.target.result
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        database.createObjectStore(STORE_NAME, { keyPath: 'path' })
-      }
-    }
-  })
-}
-
-async function saveFileLocally(path, base64Data) {
-  try {
-    const database = await getDB()
-    const transaction = database.transaction([STORE_NAME], 'readwrite')
-    const store = transaction.objectStore(STORE_NAME)
-    store.put({ path, data: base64Data })
-  } catch (error) {
-    console.error('Error saving file locally:', error)
-  }
-}
-
-async function getFileLocally(path) {
-  try {
-    const database = await getDB()
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([STORE_NAME], 'readonly')
-      const store = transaction.objectStore(STORE_NAME)
-      const request = store.get(path)
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-  } catch (error) {
-    console.error('Error getting file locally:', error)
-    return null
-  }
-}
-
-async function deleteFileLocally(id) {
-  // Файл удаляется по path, но у нас только ID
-  // В реальном приложении нужно хранить маппинг
-  return true
-}
-
+/**
+ * Получить URL файла (теперь файлы в файловой системе)
+ */
 export async function getLocalFileUrl(path) {
-  const result = await getFileLocally(path)
-  if (result && result.data) {
-    return `data:image;base64,${result.data}`
-  }
+  // Просто возвращаем путь, файлы доступны напрямую
   return path
 }
 

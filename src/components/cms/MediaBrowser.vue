@@ -76,29 +76,68 @@
     </div>
 
     <!-- File Grid -->
-    <div v-else-if="viewMode === 'grid'" class="neu-media-file-grid">
-      <FileCard
+    <div v-if="viewMode === 'grid'" class="neu-media-file-grid">
+      <div
         v-for="file in filteredFiles"
         :key="file.id"
-        :file="file"
-        :selected="selectedFileIds.includes(file.id)"
-        @select="toggleSelection"
-        @preview="openPreview"
+        class="neu-media-file-card"
+        @click="openPreview(file)"
         @contextmenu="(e) => openContextMenu(e, file)"
-      />
+      >
+        <div class="neu-media-file-preview">
+          <img v-if="file.fileType === 'image'" :src="file.url" :alt="file.original_name" loading="lazy" />
+          <video v-else-if="file.fileType === 'video'" :src="file.url" muted preload="metadata" poster="">
+            <source :src="file.url" :type="file.type" />
+          </video>
+          <span v-else class="neu-media-file-icon">📄</span>
+        </div>
+        <div class="neu-media-file-info">
+          <div class="neu-media-file-name" :title="file.original_name">{{ file.original_name || file.name }}</div>
+          <div class="neu-media-file-meta">
+            <span>{{ file.sizeFormatted }}</span>
+            <span>{{ file.fileType }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- File List -->
-    <div v-else class="neu-media-file-list">
-      <FileListItem
+    <div v-else-if="viewMode === 'list'" class="neu-media-file-list">
+      <div
         v-for="file in filteredFiles"
         :key="file.id"
-        :file="file"
-        :selected="selectedFileIds.includes(file.id)"
-        @select="toggleSelection"
-        @preview="openPreview"
+        class="neu-media-file-list-item"
         @contextmenu="(e) => openContextMenu(e, file)"
-      />
+      >
+        <div
+          class="neu-media-file-checkbox"
+          :class="{ 'neu-media-file-checkbox--checked': selectedFileIds.includes(file.id) }"
+          @click.stop="toggleSelection(file.id)"
+        >
+          {{ selectedFileIds.includes(file.id) ? '✓' : '' }}
+        </div>
+        <div class="neu-media-file-list-thumbnail">
+          <img v-if="file.fileType === 'image'" :src="file.url" :alt="file.original_name" loading="lazy" />
+          <video v-else-if="file.fileType === 'video'" :src="file.url" muted preload="metadata"></video>
+          <span v-else class="neu-media-file-list-icon">📄</span>
+        </div>
+        <div class="neu-media-file-list-name-wrapper">
+          <div class="neu-media-file-list-name" :title="file.original_name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ file.original_name || file.name }}</div>
+        </div>
+        <div class="neu-media-file-list-meta">{{ file.sizeFormatted }}</div>
+        <div class="neu-media-file-list-meta">{{ file.fileType.toUpperCase() }}</div>
+        <div class="neu-media-file-list-actions" style="margin-left: auto; justify-content: flex-end;">
+          <button class="neu-media-file-action-btn" @click.stop="editMetadata(file)" title="Редактировать">
+            ✏️
+          </button>
+          <button class="neu-media-file-action-btn" @click.stop="copyUrl(file)" title="Копировать URL">
+            🔗
+          </button>
+          <button class="neu-media-file-action-btn neu-media-file-action-btn--danger" @click.stop="deleteFile(file)" title="Удалить">
+            🗑️
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Context Menu -->
@@ -265,7 +304,7 @@ export default defineComponent({
       default: null
     }
   },
-  emits: ['select-folder', 'delete-file', 'edit-metadata', 'copy-url', 'download-file'],
+  emits: ['select-folder', 'delete-file', 'edit-metadata', 'copy-url', 'download-file', 'preview'],
   setup(props, { emit }) {
     const mediaStore = useMediaStore()
     const contextMenu = ref({
@@ -275,7 +314,11 @@ export default defineComponent({
       file: null
     })
 
-    const filteredFiles = computed(() => mediaStore.filteredFiles)
+    const filteredFiles = computed(() => {
+      const files = mediaStore.filteredFiles
+      console.log('MediaBrowser filteredFiles:', files.length, files)
+      return files
+    })
     const selectedFileIds = computed(() => mediaStore.selectedFileIds)
     const hasSelection = computed(() => mediaStore.hasSelection)
     const selectionCount = computed(() => mediaStore.selectionCount)
@@ -320,7 +363,7 @@ export default defineComponent({
     }
 
     function openPreview(file) {
-      mediaStore.openPreviewModal(file.id)
+      emit('preview', file)
     }
 
     function openContextMenu(event, file) {
@@ -358,8 +401,12 @@ export default defineComponent({
 
     function copyUrl(file) {
       closeContextMenu()
-      const url = getLocalFileUrl(file.url)
-      navigator.clipboard.writeText(url)
+      const url = window.location.origin + file.url
+      navigator.clipboard.writeText(url).then(() => {
+        console.log('URL скопирован:', url)
+      }).catch(err => {
+        console.error('Ошибка копирования:', err)
+      })
       emit('copy-url', url)
     }
 
@@ -441,5 +488,129 @@ export default defineComponent({
 .neu-media-bulk-action-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: scale(1.1);
+}
+
+/* File List Styles */
+.neu-media-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.neu-media-file-list-item {
+  display: grid;
+  grid-template-columns: 40px 50px minmax(200px, 50%) 90px 80px auto;
+  gap: var(--space-md);
+  align-items: center;
+  min-height: 52px;
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(145deg, var(--neu-bg-secondary), var(--neu-bg-primary));
+  border-radius: var(--radius-md);
+  box-shadow:
+    2px 2px 4px var(--neu-shadow-dark),
+    -2px -2px 4px var(--neu-shadow-light);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.neu-media-file-list-item:hover {
+  box-shadow:
+    3px 3px 6px var(--neu-shadow-dark),
+    -3px -3px 6px var(--neu-shadow-light);
+}
+
+.neu-media-file-list-item--selected {
+  box-shadow:
+    inset 2px 2px 4px var(--neu-shadow-dark),
+    inset -2px -2px 4px var(--neu-shadow-light),
+    0 0 0 2px var(--neu-primary);
+}
+
+.neu-media-file-list-thumbnail {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neu-bg-tertiary);
+  flex-shrink: 0;
+}
+
+.neu-media-file-list-thumbnail img,
+.neu-media-file-list-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.neu-media-file-list-icon {
+  font-size: 1.8rem;
+  opacity: 0.6;
+}
+
+.neu-media-file-list-name-wrapper {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--neu-border);
+  overflow: hidden;
+}
+
+.neu-media-file-list-name {
+  font-family: var(--fn);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--neu-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.neu-media-file-list-meta {
+  font-size: 0.75rem;
+  color: var(--neu-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.neu-media-file-list-actions {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: flex-start;
+  margin-left: auto;
+}
+
+.neu-media-file-action-btn {
+  width: 36px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg, var(--neu-bg-secondary), var(--neu-bg-primary));
+  box-shadow:
+    2px 2px 4px var(--neu-shadow-dark),
+    -2px -2px 4px var(--neu-shadow-light);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.neu-media-file-action-btn:hover {
+  box-shadow:
+    3px 3px 6px var(--neu-shadow-dark),
+    -3px -3px 6px var(--neu-shadow-light);
+  transform: translateY(-1px);
+}
+
+.neu-media-file-action-btn--danger:hover {
+  background: linear-gradient(135deg, var(--neu-primary), var(--neu-primary-dark));
+  color: #fff;
 }
 </style>

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import * as mediaService from '@/services/mediaService'
+import { useUIStore } from './ui'
 
 export const useMediaStore = defineStore('media', {
   state: () => ({
@@ -130,28 +131,36 @@ export const useMediaStore = defineStore('media', {
         const folders = await mediaService.fetchAllFolders()
         this.folders = folders
         this.folderTree = mediaService.buildFolderTree(folders)
+        this.$patch({
+          folders: [...folders],
+          folderTree: mediaService.buildFolderTree(folders)
+        })
       } catch (error) {
         this.error = error.message
         console.error('Failed to fetch folders:', error)
+        const uiStore = useUIStore()
+        uiStore.showError('Не удалось загрузить папки')
       } finally {
         this.isLoading = false
       }
     },
 
     async createFolder(name, parentId = null) {
+      const uiStore = useUIStore()
       try {
         const folder = await mediaService.createFolder(name, parentId)
-        this.folders.push(folder)
-        this.folderTree = mediaService.buildFolderTree(this.folders)
+        await this.fetchFolders()
+        uiStore.showSuccess('Папка создана')
         return folder
       } catch (error) {
-        this.error = error.message
         console.error('Failed to create folder:', error)
+        uiStore.showError('Не удалось создать папку')
         throw error
       }
     },
 
     async updateFolder(id, updates) {
+      const uiStore = useUIStore()
       try {
         const folder = await mediaService.updateFolder(id, updates)
         const index = this.folders.findIndex(f => f.id === id)
@@ -159,15 +168,17 @@ export const useMediaStore = defineStore('media', {
           this.folders[index] = folder
           this.folderTree = mediaService.buildFolderTree(this.folders)
         }
+        uiStore.showSuccess('Папка обновлена')
         return folder
       } catch (error) {
-        this.error = error.message
         console.error('Failed to update folder:', error)
+        uiStore.showError('Не удалось обновить папку')
         throw error
       }
     },
 
     async deleteFolder(id) {
+      const uiStore = useUIStore()
       try {
         await mediaService.deleteFolder(id)
         this.folders = this.folders.filter(f => f.id !== id)
@@ -175,9 +186,10 @@ export const useMediaStore = defineStore('media', {
         if (this.currentFolderId === id) {
           this.currentFolderId = null
         }
+        uiStore.showSuccess('Папка удалена')
       } catch (error) {
-        this.error = error.message
         console.error('Failed to delete folder:', error)
+        uiStore.showError('Не удалось удалить папку')
         throw error
       }
     },
@@ -207,27 +219,32 @@ export const useMediaStore = defineStore('media', {
       } catch (error) {
         this.error = error.message
         console.error('Failed to fetch files:', error)
+        const uiStore = useUIStore()
+        uiStore.showError('Не удалось загрузить файлы')
       } finally {
         this.isLoading = false
       }
     },
 
-    async uploadFiles(files, folderId = null, bucketId = 'images') {
+    async uploadFiles(files, folderId = null, folderName = '', bucketId = 'images') {
+      const uiStore = useUIStore()
       this.isLoading = true
       this.error = null
       const uploadedFiles = []
 
       try {
         for (const file of files) {
-          const uploadedFile = await mediaService.uploadFile(file, folderId, bucketId)
+          const uploadedFile = await mediaService.uploadFile(file, folderId, folderName, bucketId)
           uploadedFiles.push(uploadedFile)
           this.files.unshift(uploadedFile)
         }
         await this.fetchStatistics()
+        uiStore.showSuccess(`Загружено файлов: ${uploadedFiles.length}`)
         return uploadedFiles
       } catch (error) {
         this.error = error.message
         console.error('Failed to upload files:', error)
+        uiStore.showError('Ошибка загрузки файлов')
         throw error
       } finally {
         this.isLoading = false
@@ -235,12 +252,14 @@ export const useMediaStore = defineStore('media', {
     },
 
     async updateFile(id, updates) {
+      const uiStore = useUIStore()
       try {
         const file = await mediaService.updateFile(id, updates)
         const index = this.files.findIndex(f => f.id === id)
         if (index !== -1) {
           this.files[index] = file
         }
+        uiStore.showSuccess('Файл обновлён')
         return file
       } catch (error) {
         this.error = error.message
@@ -250,44 +269,48 @@ export const useMediaStore = defineStore('media', {
     },
 
     async deleteFile(id) {
+      const uiStore = useUIStore()
       try {
         await mediaService.deleteFile(id)
         this.files = this.files.filter(f => f.id !== id)
         this.selectedFileIds = this.selectedFileIds.filter(fid => fid !== id)
         await this.fetchStatistics()
+        uiStore.showSuccess('Файл удалён')
       } catch (error) {
-        this.error = error.message
         console.error('Failed to delete file:', error)
+        uiStore.showError('Не удалось удалить файл')
         throw error
       }
     },
 
     async deleteSelectedFiles() {
+      const uiStore = useUIStore()
       try {
         await mediaService.deleteFiles(this.selectedFileIds)
         this.files = this.files.filter(f => !this.selectedFileIds.includes(f.id))
         this.selectedFileIds = []
         await this.fetchStatistics()
+        uiStore.showSuccess(`Удалено файлов: ${this.selectedFileIds.length}`)
       } catch (error) {
-        this.error = error.message
         console.error('Failed to delete selected files:', error)
+        uiStore.showError('Не удалось удалить файлы')
         throw error
       }
     },
 
     async moveFilesToFolder(fileIds, folderId) {
+      const uiStore = useUIStore()
       try {
         await mediaService.moveFiles(fileIds, folderId)
         const folderName = folderId ? 'папку' : 'корень'
-        console.log(`Файлы перемещены в ${folderName}`)
-        
+        uiStore.showSuccess(`Файлы перемещены в ${folderName}`)
+
         // Обновляем файлы в текущем списке
         if (this.currentFolderId && this.currentFolderId !== folderId) {
           this.files = this.files.filter(f => !fileIds.includes(f.id))
         }
         this.selectedFileIds = []
       } catch (error) {
-        this.error = error.message
         console.error('Failed to move files:', error)
         throw error
       }
@@ -398,7 +421,8 @@ export const useMediaStore = defineStore('media', {
     // ══════════════════════════════════════════════════
 
     async init() {
-      await Promise.all([
+      // Запускаем параллельно, но ошибки не блокируют другие запросы
+      await Promise.allSettled([
         this.fetchFolders(),
         this.fetchFiles(),
         this.fetchStatistics()

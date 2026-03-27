@@ -28,10 +28,11 @@
   width: 100%;
   max-width: 700px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   margin: var(--space-2xl) auto;
   transform: translateY(-20px);
   transition: transform var(--transition-base);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .modal-overlay--active .modal-box {
@@ -43,7 +44,7 @@
   top: var(--space-md);
   right: var(--space-md);
   background: rgba(122, 21, 21, 0.1);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   color: var(--cr);
   width: 32px;
   height: 32px;
@@ -59,6 +60,7 @@
 
 .modal-close:hover {
   background: rgba(122, 21, 21, 0.2);
+  box-shadow: none;
 }
 
 /* ── Author Modal ── */

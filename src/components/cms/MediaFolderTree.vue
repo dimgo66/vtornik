@@ -11,19 +11,19 @@
     </div>
 
     <!-- Дерево папок -->
-    <template v-for="folder in folderTree" :key="folder.id">
-      <FolderNode
-        :folder="folder"
-        :current-folder-id="currentFolderId"
-        :file-counts="fileCounts"
-        @select="selectFolder"
-        @create="openCreateFolder"
-        @delete="confirmDeleteFolder"
-      />
-    </template>
+    <div v-for="folder in folderTree" :key="folder.id">
+      <div
+        class="neu-media-folder-item"
+        :class="{ 'neu-media-folder-item--active': currentFolderId === folder.id }"
+        @click="selectFolder(folder.id)"
+      >
+        <span class="neu-media-folder-icon">📁</span>
+        <span class="neu-media-folder-name">{{ folder.name }}</span>
+      </div>
+    </div>
 
     <!-- Кнопка создания папки -->
-    <button class="neu-media-create-folder-btn" @click="openCreateFolder">
+    <button class="neu-media-create-folder-btn" @click.stop="openCreateFolder(null)">
       <span class="neu-media-create-folder-icon">+</span>
       Новая папка
     </button>
@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { computed, ref, defineComponent } from 'vue'
+import { computed, ref, defineComponent, watch } from 'vue'
 import { useMediaStore } from '@/stores/media'
 
 // ── Folder Node Component ──
@@ -115,7 +115,10 @@ const FolderNode = defineComponent({
         />
       </div>
     </div>
-  `
+  `,
+  mounted() {
+    console.log('FolderNode mounted:', this.folder?.name, 'children:', this.folder?.children?.length)
+  }
 })
 
 // ── Main Component ──
@@ -131,12 +134,26 @@ export default defineComponent({
   emits: ['select-folder', 'create-folder', 'delete-folder'],
   setup(props, { emit }) {
     const mediaStore = useMediaStore()
-    const folderTree = computed(() => mediaStore.folderTree)
+    // Прямое обращение к store для реактивности
+    const folderTree = computed(() => {
+      const tree = mediaStore.folderTree
+      console.log('folderTree computed:', tree?.length)
+      return tree
+    })
+    const files = computed(() => mediaStore.files)
+    
+    console.log('MediaFolderTree setup: folderTree=', folderTree.value?.length, files.value?.length)
+    
+    // Следим за изменениями folderTree
+    watch(() => mediaStore.folderTree, (newTree) => {
+      console.log('folderTree changed:', newTree?.length, newTree)
+    }, { deep: true })
+    
     const fileCounts = computed(() => getFileCounts())
 
     function getFileCounts() {
       const counts = {}
-      mediaStore.files.forEach(file => {
+      files.value.forEach(file => {
         if (file.folder_id) {
           counts[file.folder_id] = (counts[file.folder_id] || 0) + 1
         }

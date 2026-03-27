@@ -1,9 +1,10 @@
 // Конфигурация для локального PostgREST (без JWT)
-const API_URL = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:3004'
+// Используем относительный URL с proxy
+const API_URL = ''
 
 // Прямой fetch для локальной разработки
 async function apiRequest(endpoint, options = {}) {
-  const url = `${API_URL}${endpoint}`
+  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -12,7 +13,7 @@ async function apiRequest(endpoint, options = {}) {
       ...options.headers
     }
   })
-  
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }))
     throw new Error(error.message || response.statusText)

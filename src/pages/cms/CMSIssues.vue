@@ -7,7 +7,17 @@
       </RouterLink>
     </div>
 
-    <div class="neu-cms-table-wrap">
+    <div v-if="loading" class="neu-cms-loading">
+      <div class="neu-cms-loading-spinner"></div>
+      <p class="neu-cms-loading-text">Загрузка номеров...</p>
+    </div>
+
+    <div v-else-if="error" class="neu-cms-error">
+      <p class="neu-cms-error-text">❌ {{ error }}</p>
+      <button class="neu-btn neu-btn--primary" @click="refreshIssues">Попробовать снова</button>
+    </div>
+
+    <div v-else class="neu-cms-table-wrap">
       <table class="neu-cms-table">
         <thead>
           <tr>
@@ -44,18 +54,18 @@
                 <RouterLink :to="`/cms/issue/${issue.id}/edit`" class="neu-cms-icon-btn" title="Редактировать">
                   ✏️
                 </RouterLink>
-                <button 
+                <button
                   v-if="issue.status !== 'published'"
-                  class="neu-cms-icon-btn neu-cms-icon-btn--success" 
-                  @click="publishIssue(issue.id)" 
+                  class="neu-cms-icon-btn neu-cms-icon-btn--success"
+                  @click="publishIssue(issue.id)"
                   title="Опубликовать"
                 >
                   ✅
                 </button>
-                <button 
+                <button
                   v-if="issue.status === 'published'"
-                  class="neu-cms-icon-btn neu-cms-icon-btn--warning" 
-                  @click="unpublishIssue(issue.id)" 
+                  class="neu-cms-icon-btn neu-cms-icon-btn--warning"
+                  @click="unpublishIssue(issue.id)"
                   title="В черновик"
                 >
                   ⏸️
@@ -83,6 +93,8 @@ import { useIssuesStore } from '@/stores/issues'
 
 const issuesStore = useIssuesStore()
 const issues = computed(() => issuesStore.allIssues)
+const loading = computed(() => issuesStore.loading)
+const error = computed(() => issuesStore.error)
 
 onMounted(() => {
   if (issuesStore.issues.length === 0) {
@@ -99,14 +111,12 @@ function deleteIssue(id) {
 async function publishIssue(id) {
   if (confirm('Опубликовать этот номер?')) {
     await issuesStore.updateIssue(id, { status: 'published' })
-    await refreshIssues()
   }
 }
 
 async function unpublishIssue(id) {
   if (confirm('Перевести номер в черновики?')) {
     await issuesStore.updateIssue(id, { status: 'draft' })
-    await refreshIssues()
   }
 }
 
@@ -116,6 +126,39 @@ async function refreshIssues() {
 </script>
 
 <style scoped>
+.neu-cms-loading,
+.neu-cms-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  gap: var(--space-md);
+}
+
+.neu-cms-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--neu-shadow-dark);
+  border-top-color: var(--neu-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.neu-cms-loading-text,
+.neu-cms-error-text {
+  color: var(--neu-text-secondary);
+  font-size: 0.95rem;
+}
+
+.neu-cms-error-text {
+  color: var(--neu-error);
+}
+
 .neu-cms-table-num {
   font-weight: 700;
   color: var(--neu-primary);

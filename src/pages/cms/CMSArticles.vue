@@ -7,7 +7,17 @@
       </RouterLink>
     </div>
 
-    <div class="neu-cms-table-wrap">
+    <div v-if="loading" class="neu-cms-loading">
+      <div class="neu-cms-loading-spinner"></div>
+      <p class="neu-cms-loading-text">Загрузка статей...</p>
+    </div>
+
+    <div v-else-if="error" class="neu-cms-error">
+      <p class="neu-cms-error-text">❌ {{ error }}</p>
+      <button class="neu-btn neu-btn--primary" @click="fetchArticles">Попробовать снова</button>
+    </div>
+
+    <div v-else class="neu-cms-table-wrap">
       <table class="neu-cms-table">
         <thead>
           <tr>
@@ -54,7 +64,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useArticlesStore } from '@/stores/articles'
 import { useAuthorsStore } from '@/stores/authors'
@@ -67,6 +77,18 @@ const issuesStore = useIssuesStore()
 const articles = computed(() => articlesStore.allArticles)
 const authors = computed(() => authorsStore.allAuthors)
 const issues = computed(() => issuesStore.allIssues)
+const loading = computed(() => articlesStore.loading)
+const error = computed(() => articlesStore.error)
+
+onMounted(() => {
+  if (articlesStore.articles.length === 0) {
+    articlesStore.fetchArticles()
+  }
+})
+
+function fetchArticles() {
+  articlesStore.fetchArticles()
+}
 
 const sections = {
   prose: 'Проза',
@@ -96,6 +118,39 @@ function deleteArticle(id) {
 </script>
 
 <style scoped>
+.neu-cms-loading,
+.neu-cms-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  gap: var(--space-md);
+}
+
+.neu-cms-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--neu-shadow-dark);
+  border-top-color: var(--neu-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.neu-cms-loading-text,
+.neu-cms-error-text {
+  color: var(--neu-text-secondary);
+  font-size: 0.95rem;
+}
+
+.neu-cms-error-text {
+  color: var(--neu-error);
+}
+
 .neu-cms-section {
   max-width: 1200px;
 }

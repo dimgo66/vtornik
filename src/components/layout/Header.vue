@@ -16,7 +16,9 @@
         <RouterLink to="/authors" class="neu-header__nav-link">Авторы</RouterLink>
         <RouterLink to="/about" class="neu-header__nav-link">О журнале</RouterLink>
         <div class="neu-header__divider"></div>
-        <RouterLink to="/cms" class="neu-header__nav-link neu-header__nav-link--cms">CMS</RouterLink>
+        <RouterLink to="/cms/login" class="neu-header__nav-link neu-header__nav-link--cms" title="Вход в CMS">
+          <span class="iconify" data-icon="mdi:login"></span>
+        </RouterLink>
         <ThemeToggle />
       </nav>
     </div>
@@ -135,6 +137,14 @@ function toggleMenu() {
 
 .neu-header__nav-link--cms {
   color: var(--neu-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.neu-header__nav-link--cms .iconify {
+  width: 24px;
+  height: 24px;
 }
 
 .neu-header__nav-link--cms:hover {
